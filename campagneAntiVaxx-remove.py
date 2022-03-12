@@ -1,6 +1,4 @@
-from genericpath import exists
 import os
-import sys
 from datetime import datetime, timedelta
 import tkinter as tk
 from tkinter import filedialog
@@ -20,15 +18,16 @@ def generateProgressBar(percent):
 
 currentTime = datetime.now()
 
-def progress(incL, totalL, incF, totalF, f):
+def progress(incL, totalL, incF, totalF, f, force=False):
     global currentTime
-    if currentTime + timedelta(milliseconds=100) >= datetime.now():
+    if currentTime + timedelta(milliseconds=500) >= datetime.now() and not force:
         return
     currentTime = datetime.now()
 
+
     totalSize = os.get_terminal_size().columns
 
-    incL += 1
+    # incL += 1
     percentL = (incL * 100.0) / totalL
     percentF = (incF * 100.0) / totalF
 
@@ -59,7 +58,7 @@ root = tk.Tk()
 root.withdraw()
 
 
-file_path = filedialog.askopenfilename(title="Sélectionnez un rapport d'enquête")
+file_path = filedialog.askopenfilename(title="Sélectionnez un rapport d'enquête", initialdir=os.getcwd())
 
 if file_path == "":
     exit()
@@ -103,17 +102,19 @@ for fileCursor, cf in enumerate(corruptedFiles):
                 if 'vaccine_gene' in line:
                     for i in range(0,7):
                         next(file_iter)
+                    continue
                 if 'breed_gene' in line:
                     for i in range(0,4):
                         next(file_iter)
+                    continue
             elif 'fileInfo "license" "student";\n' in line:
                 continue
-            else:
-                f.write(line)
+            f.write(line)
             f.truncate()
         # except:
         #     print("error while reading[{}]".format(cf))
         #     pass
+progress(100, 100, len(corruptedFiles), len(corruptedFiles), cf, force=True)
 
 print("Done")
 input("press enter")
