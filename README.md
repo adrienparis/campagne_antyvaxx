@@ -1,6 +1,6 @@
 Solution pour nettoyer son PC du vaccin chinois
 Vaccin qui protège d'un virus nommé "`PuTianTongQing`"
-qui affiche "`你的文件贼健康~我就说一声没有别的意思`" lorsque vous sauvegardé une scène
+qui affiche "`你的文件贼健康~我就说一声没有别的意思`" lorsque vous sauvegardez une scène
 Mais qui à une légère tendance à se répandre absolument partout
 
 On peut retrouver des traces du virus originel ici

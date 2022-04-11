@@ -27,15 +27,10 @@ def progress(incL, totalL, incF, totalF, f, force=False):
 
     totalSize = os.get_terminal_size().columns
 
-    # incL += 1
     percentL = (incL * 100.0) / totalL
     percentF = (incF * 100.0) / totalF
 
     os.system('cls' if os.name == 'nt' else 'clear')
-    # for erase in range(3):
-    #     sys.stdout.write(CURSOR_UP_ONE)
-    #     sys.stdout.write(ERASE_LINE)
-
 
     lines = []
     lines.append(generateProgressBar(percentF))
@@ -46,75 +41,82 @@ def progress(incL, totalL, incF, totalF, f, force=False):
         l = l[:totalSize - 1]
         print(l)
 
+def promptFile():
 
-    # lineF = "{: 3d} % |{}| {: {}d}/{}  -> {}".format(percent, progressBar,incL, len(str(total)) + 1, total, f)
-    # lineF = lineF + " " * (totalSize - len(lineF))
-    # lineF = lineF[:totalSize - 1]
+    root = tk.Tk()
 
-    # print(lineF, end="\r")
-
-root = tk.Tk()
-
-root.withdraw()
+    root.withdraw()
 
 
-file_path = filedialog.askopenfilename(title="Sélectionnez un rapport d'enquête", initialdir=os.getcwd())
+    file_path = filedialog.askopenfilename(title="Sélectionnez un rapport d'enquête ou un fichier maya", initialdir=os.getcwd())
 
-if file_path == "":
-    exit()
+    if file_path == "":
+        exit()
 
-corruptedFiles = []
+    if file_path.endswith(".ma"):
+        return [file_path]
 
-print(file_path)
-with open(file_path, "r") as f:
-    l = f.readline()
-    while l:
-        l = l[l.find(" - ") + 3:]
-        l.replace("\n", "")
-        l = l.rstrip().lstrip()
-        if not os.path.exists(l):
-            continue
-        if len(l) != 0:
-            corruptedFiles.append(l)
+    corruptedFiles = []
+
+    print(file_path)
+    with open(file_path, "r") as f:
         l = f.readline()
-
-
-for fileCursor, cf in enumerate(corruptedFiles):
-    if cf.split(".")[-1] != "ma":
-        continue
-
-
-    with open(cf, 'r+') as f :
-        for count, line in enumerate(f):
-            pass
-    nbLines = count + 1
-    print(nbLines)
-
-    with open(cf, 'r+') as f :
-        # try:
-        new_f = f.readlines()
-        f.seek(0)
-
-        file_iter = iter(new_f)
-        for il, line in enumerate(file_iter):
-            progress(il, nbLines, fileCursor, len(corruptedFiles), cf)
-            if 'createNode script -n "' in line:
-                if 'vaccine_gene' in line:
-                    for i in range(0,7):
-                        next(file_iter)
-                    continue
-                if 'breed_gene' in line:
-                    for i in range(0,4):
-                        next(file_iter)
-                    continue
-            elif 'fileInfo "license" "student";\n' in line:
+        while l:
+            l = l[l.find(" - ") + 3:]
+            l.replace("\n", "")
+            l = l.rstrip().lstrip()
+            if not os.path.exists(l):
                 continue
-            f.write(line)
-            f.truncate()
-        # except:
-        #     print("error while reading[{}]".format(cf))
-        #     pass
-progress(100, 100, len(corruptedFiles), len(corruptedFiles), cf, force=True)
+            if len(l) != 0:
+                corruptedFiles.append(l)
+            l = f.readline()
+    
 
-print("Done")
-input("press enter")
+    return corruptedFiles
+
+def cleanning(corruptedFiles):
+
+    for fileCursor, cf in enumerate(corruptedFiles):
+        if cf.split(".")[-1] != "ma":
+            continue
+
+
+        with open(cf, 'r+') as f :
+            for count, line in enumerate(f):
+                pass
+        nbLines = count + 1
+        print(nbLines)
+
+        with open(cf, 'r+') as f :
+            # try:
+            new_f = f.readlines()
+            f.seek(0)
+
+            file_iter = iter(new_f)
+            for il, line in enumerate(file_iter):
+                progress(il, nbLines, fileCursor, len(corruptedFiles), cf)
+                if 'createNode script -n "' in line:
+                    if 'vaccine_gene' in line:
+                        for i in range(0,7):
+                            next(file_iter)
+                        continue
+                    if 'breed_gene' in line:
+                        for i in range(0,4):
+                            next(file_iter)
+                        continue
+                elif 'fileInfo "license" "student";\n' in line:
+                    continue
+                f.write(line)
+                f.truncate()
+            # except:
+            #     print("error while reading[{}]".format(cf))
+            #     pass
+def main():
+
+    corruptedFiles = promptFile()
+    cleanning(corruptedFiles)
+
+    progress(100, 100, len(corruptedFiles), len(corruptedFiles), cf, force=True)
+
+    print("Done")
+    input("press enter")

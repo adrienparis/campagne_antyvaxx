@@ -3,6 +3,7 @@ import os
 import time
 import io
 import tkinter as tk
+from datetime import datetime
 
 
 from tkinter import filedialog
@@ -31,15 +32,18 @@ class SearchingBar():
 
 
 def isCorrupt(path):
-    corruptNode = 'createNode script -n "vaccine_gene";'
+    corruptNode = 'vaccine_gene'
     with io.open(path, "rb") as f:
         if bytes(corruptNode, 'utf-8') in f.read():
             return True
     return False
 
-def progress(i, total, f):
+def progress(i, total, f, perct=False):
     i += 1
-    percent = int((i * 100.0)/total)
+    if perct == False:
+        percent = int((i * 100.0)/total)
+    else:
+        percent = int(perct)
     size = PROGSEARCHSIZE / 100.0
     totalSize = os.get_terminal_size().columns
     p = int(percent * size)
@@ -50,6 +54,8 @@ def progress(i, total, f):
     line = line[:totalSize - 1]
     print(line, end="\r")
 
+def unzipFile(path):
+    pass
 
 def getMayaFiles(directory):
     print("\nSearching maya files")
@@ -59,37 +65,34 @@ def getMayaFiles(directory):
         mayaFiles = [os.path.join(root, x) for x in files if x.endswith(".ma")]
         mayaFilesList += mayaFiles
         schBar.print()
-
-        # satusStr.set(root)
-        # progressBarCounting['value'] += 1
-        # progressWin.update_idletasks()
     return mayaFilesList
 
 def searching():
     print("Starting")
     mayaFilesList = getMayaFiles(directory_path)
+    totalSize = sum([os.path.getsize(x) for x in mayaFilesList])
+    print("\n {} bytes to analyze".format(totalSize))
     print("\nAnalyzing maya files")
     nbFiles = len(mayaFilesList)
     oldPercent = 0
-    lines = []
-    for i, mf_path in enumerate(mayaFilesList):
-        mf_path = os.path.normpath(mf_path)
+    corruptedFiles = []
+    searchedSize = 0.0
+    try:
+        for i, mf_path in enumerate(mayaFilesList):
+            mf_path = os.path.normpath(mf_path)
 
-        progress(i, nbFiles, mf_path)
-        # percent = int((i * 100.0)/nbFiles)
-        
-        # if percent != oldPercent:
-        #     oldPercent = percent
-        #     print("{} % -> {}".format(percent, mf_path), end = "\r")
-            
-            # satusStr.set("{} %".format(percent))
-            # progressWin.update_idletasks()
-            # progressBarSearching['value'] = percent
-        if isCorrupt(mf_path):
-            t = time.ctime(os.path.getmtime(mf_path))
-            lines.append("{} - {}\n".format(t, mf_path))
+            progress(i, nbFiles, mf_path, searchedSize * 100.0 / totalSize)
+            searchedSize += os.path.getsize(mf_path)
+            if isCorrupt(mf_path):
+                time_str = time.ctime(os.path.getmtime(mf_path))
+                t = datetime.strptime(time_str, "%a %b %d %H:%M:%S %Y")
+                corruptedFiles.append([t, mf_path])
+        progress(nbFiles, nbFiles, "Done !", 100.0)
+    except KeyboardInterrupt:
+        progress(i, nbFiles, "CANCELED", searchedSize * 100.0 / totalSize)
+        print("\n\nStop the search at : \n\t" + mf_path)
     print("\n\nDone !")
-    return lines
+    return corruptedFiles
 
 
 
@@ -101,8 +104,10 @@ if directory_path == "":
 FolderName = directory_path.replace("/", "_").replace(":", "")
 
 
-lines = searching()
+corruptedFiles = searching()
+corruptedFiles = sorted(corruptedFiles, key=lambda x: x[0])
 reportFileName = "report_{}.txt".format(FolderName)
+lines = ["{} - {}\n".format(x[0], x[1]) for x in corruptedFiles]
 with open(reportFileName, "w+") as report:
     report.writelines(lines)
 os.system('notepad.exe "{}"'.format(reportFileName))
